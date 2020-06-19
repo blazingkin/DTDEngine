@@ -1,0 +1,5 @@
+*.o
+build/*
+ext/irrKlang/*
+.vscode/*
+**.DS_Store**

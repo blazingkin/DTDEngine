@@ -30,6 +30,11 @@ class BLZEntity : public std::enable_shared_from_this<BLZEntity> {
             return result;
         }
 
+        static std::shared_ptr<BLZEntity> newSimpleEntity() {
+            auto result = std::make_shared<BLZEntity>();
+            return result;
+        }
+
         static std::shared_ptr<BLZEntity> newEntity() {
             auto result = std::make_shared<BLZEntity>();
             return result;

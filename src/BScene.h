@@ -36,6 +36,8 @@ class BScene {
         std::vector<std::shared_ptr<BLZEntity>> getEntitiesWithComponents(std::vector<component_id_t> types);
         std::shared_ptr<BLZEntity> maybeFindClosestEntityWithComponent(component_id_t type, glm::vec3 position);
 
+        std::shared_ptr<BLZEntity> singleton();
+
         glm::vec3 lightLocation;
         glm::vec3 lightColor = glm::vec3(1, 1, 1);
         std::shared_ptr<Skybox> skybox;
@@ -69,6 +71,7 @@ class BScene {
         std::map<component_id_t, std::vector<std::shared_ptr<BLZEntity>>> componentEntityMap;
         uint64_t counter = 1;
         glm::vec2 occupancyGridCellSize;
+        std::shared_ptr<BLZEntity> m_singleton;
 
 
 

@@ -40,7 +40,7 @@ void updateBoundingBox(std::shared_ptr<BLZEntity> e, BScene *scene) {
         rotationMatrix[2][2] = cos(beta) * cos(gamma);
         
         // Multiply to get new bounding vertices
-        for (int i = 0; i < bounds.size(); i++) {
+        for (size_t i = 0; i < bounds.size(); i++) {
             bounds[i] = rotationMatrix * (locationComponent->size * bounds[i]);
 
         }

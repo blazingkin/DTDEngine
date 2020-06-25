@@ -3,6 +3,8 @@
 #include <typeindex>
 #include <typeinfo>
 #include <glm/gtc/type_ptr.hpp>
+#include <stdint.h>
+#include <map>
 #include <memory>
 #include "_components.h"
 class BLZEntity;
@@ -28,25 +30,16 @@ typedef struct _collider_obj : component_t {
 #include "Material.h"
 #include "Shape.h"
 #include "Program.h"
-#include "BScene.h"
-#include <stdint.h>
-#include <map>
-
-struct _renderable_obj;
-
 
 typedef struct _physics_obj : component_t {
     glm::vec3 velocity = glm::vec3(0,0,0);
     float mass = 1;
-    uint64_t _dirty = 0;
 } c_physics_t;
 #define COMPONENT_PHYSICS (std::type_index(typeid(c_physics_t)))
 
 typedef std::shared_ptr<std::vector<Shape>> model_t;
 
 typedef struct _model_obj : component_t {
-    glm::vec3 modelOffset = glm::vec3(0, 0, 0);
-    glm::vec3 modelResize = glm::vec3(1,1,1);
     glm::vec3 lowerBound = glm::vec3(0, 0, 0);
     glm::vec3 upperBound = glm::vec3(0, 0, 0);
     model_t model = nullptr;
@@ -66,5 +59,9 @@ typedef struct _renderable_obj : component_t {
 } c_render_t;
 #define COMPONENT_RENDERABLE (std::type_index(typeid(c_render_t)))
 
+
+typedef struct _singleton_obj : component_t {
+} c_singleton_t;
+#define COMPONENT_SINGLETON (std::type_index(typeid(c_singleton_t)))
 
 #endif // Component header guard

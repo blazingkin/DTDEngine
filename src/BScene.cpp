@@ -16,10 +16,10 @@ std::map<std::string, std::shared_ptr<Texture>> textures;
 std::map<std::string, std::shared_ptr<std::vector<Shape>>> meshes;
 BScene *activeScene;
 std::map<std::string, BScene> scenes;
-//std::map<std::string, std::vector<unsigned char>> maps;
 
 BScene::BScene() {
-
+    m_singleton = BLZEntity::newSimpleEntity();
+    m_singleton->addComponent<c_singleton_t>(this, c_singleton_t{});
 }
 
 BScene::BScene(vec2 mS) {
@@ -34,6 +34,12 @@ BScene::BScene(vec2 mS) {
     mapSize = mS;
     camera = new Camera();
 
+    m_singleton = BLZEntity::newSimpleEntity();
+    m_singleton->addComponent<c_singleton_t>(this, c_singleton_t{});
+}
+
+std::shared_ptr<BLZEntity> BScene::singleton() {
+    return m_singleton;
 }
 
 int BScene::posInWorld(glm::vec3 pos){

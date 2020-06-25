@@ -39,15 +39,14 @@
             }
         }
         auto modelOffset = minExt + ((maxExt - minExt) * 0.5f);
-        modelComponent.modelOffset = -modelOffset;
         glm::vec3 modelSize = maxExt - minExt;
         float maxDimension = std::max(modelSize.x, std::max(modelSize.y, modelSize.z));
-        modelComponent.modelResize = glm::vec3(1 / maxDimension);
+        auto modelResize = glm::vec3(1 / maxDimension);
 
         auto locationComponent = c_location_t{};
 
-        modelComponent.upperBound = (maxExt - modelOffset) * modelComponent.modelResize;
-        modelComponent.lowerBound = (minExt - modelOffset) * modelComponent.modelResize;
+        modelComponent.upperBound = (maxExt - modelOffset) * modelResize;
+        modelComponent.lowerBound = (minExt - modelOffset) * modelResize;
         modelComponent.radius = calculateRadius(&modelComponent, &locationComponent);
         this->addComponent<c_model_t>(scene, modelComponent);
         this->addComponent<c_location_t>(scene, locationComponent);
@@ -55,8 +54,8 @@
 
         if (shouldCreateCollision) {
             auto collisionComponent = c_collider_t{};   
-            collisionComponent.upperBound = (maxExt - modelOffset) * modelComponent.modelResize;
-            collisionComponent.lowerBound = (minExt - modelOffset) * modelComponent.modelResize;
+            collisionComponent.upperBound = (maxExt - modelOffset) * modelResize;
+            collisionComponent.lowerBound = (minExt - modelOffset) * modelResize;
             
             this->addComponent<c_collider_t>(scene, collisionComponent);
         }

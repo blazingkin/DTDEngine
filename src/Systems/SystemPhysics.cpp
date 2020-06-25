@@ -12,8 +12,7 @@ void UpdateScenePhysics(BScene *scene, float timeDelta) {
 
 
 
-void CheckPhysicsCollisionsHelper(std::vector<std::shared_ptr<BLZEntity>> entities, int start, int end, BScene *scene, float timeDelta){
-
+void CheckPhysicsCollisionsHelper(std::vector<std::shared_ptr<BLZEntity>> entities, unsigned int start, unsigned int end, BScene *scene, float timeDelta){
     for (size_t i = start; i < end && i < entities.size(); i++) {
         auto entityA = entities[i];
         auto BoxA = entityA->getComponent<c_collider_t>();

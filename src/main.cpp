@@ -23,6 +23,7 @@
 #include "Particles.h"
 #include <thread>
 #include "Audio.h"
+#include "Scenes/GameScene.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader/tiny_obj_loader.h>
@@ -190,6 +191,7 @@ public:
 	void initScene() {
 		scenes["main"] = *new BScene(vec2(map_size/2, map_size/2));
 		activeScene = &scenes["main"];
+		InitGameScene(activeScene, 0);
 	}
 	
 	void init(const std::string& resourceDirectory)

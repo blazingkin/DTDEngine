@@ -7,6 +7,7 @@
 #include "../Systems/SystemPhysics.h"
 #include "../Particles.h"
 #include "../Audio.h"
+#include "../Systems/SystemNetworkInitialization.h"
 
 
 void UpdateGameScene(BScene *scene, WindowManager *window);

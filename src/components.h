@@ -1,6 +1,7 @@
 #ifndef COMPONENTS_H
 #define COMPONENTS_H 1
 #include <typeindex>
+#include <thread>
 #include <typeinfo>
 #include <glm/gtc/type_ptr.hpp>
 #include <stdint.h>
@@ -30,6 +31,7 @@ typedef struct _collider_obj : component_t {
 #include "Material.h"
 #include "Shape.h"
 #include "Program.h"
+#include "BScene.h"
 
 typedef struct _physics_obj : component_t {
     glm::vec3 velocity = glm::vec3(0,0,0);
@@ -63,5 +65,18 @@ typedef struct _renderable_obj : component_t {
 typedef struct _singleton_obj : component_t {
 } c_singleton_t;
 #define COMPONENT_SINGLETON (std::type_index(typeid(c_singleton_t)))
+
+
+// Singleton
+typedef struct _network_connections : component_t {
+    bool shouldTerminate = false;
+} c_network_connections_t;
+#define COMPONENT_NETWORK_CONNECTIONS (std::type_index(typeid(c_network_connections_t)))
+
+//Singleton
+typedef struct _network_queue : component_t {
+} c_network_queue_t;
+#define COMPONENT_NETWORK_QUEUE (std::type_index(typeid(c_network_queue_t)))
+
 
 #endif // Component header guard

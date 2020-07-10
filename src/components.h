@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <map>
 #include <memory>
+#include <queue>
 #include "_components.h"
 class BLZEntity;
 class BScene;
@@ -66,15 +67,20 @@ typedef struct _singleton_obj : component_t {
 } c_singleton_t;
 #define COMPONENT_SINGLETON (std::type_index(typeid(c_singleton_t)))
 
-
+#include "network.h"
 // Singleton
 typedef struct _network_connections : component_t {
     bool shouldTerminate = false;
+    std::vector<port_t> listening_port;
 } c_network_connections_t;
 #define COMPONENT_NETWORK_CONNECTIONS (std::type_index(typeid(c_network_connections_t)))
 
+
+
 //Singleton
 typedef struct _network_queue : component_t {
+    std::queue<network_packet_t> in;
+    std::queue<network_packet_t> out;
 } c_network_queue_t;
 #define COMPONENT_NETWORK_QUEUE (std::type_index(typeid(c_network_queue_t)))
 

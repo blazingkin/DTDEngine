@@ -1,5 +1,6 @@
 #include "GameScene.h"
-
+#include <gethostbyname/gethostbyname.h>
+std::string data = "ABCDEFGH";
 
 double lastUpdate = 0;
 void UpdateGameScene(BScene *scene, WindowManager *window) {
@@ -9,6 +10,15 @@ void UpdateGameScene(BScene *scene, WindowManager *window) {
     UpdateScenePhysics(scene,(float) timeDelta);
     
     CheckPhysicsCollisions(scene, timeDelta); // After UpdateScenePhysics
+    auto network_packet = network_packet_t{};
+    network_packet.data.size = data.size();
+    network_packet.data.bytes = (char *) data.c_str();
+    network_packet.host = new network_host_t{};
+    gethostbyname6("localhost", &network_packet.host->remote);
+    network_packet.host->port = 3333;
+    network_packet.host->remote.sin6_port = ntohs(3333);
+    network_packet.host->remote.sin6_family = AF_INET6;
+    scene->singleton()->getComponent<c_network_queue_t>()->out.push(network_packet);
 }
 
 void InitGameScene(BScene *scene, int map) {
@@ -32,7 +42,6 @@ void InitGameScene(BScene *scene, int map) {
     
 
     scene->update = UpdateGameScene;
-
-
     scene->skybox = skyboxes["neutral"];
+
 }

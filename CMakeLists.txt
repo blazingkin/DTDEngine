@@ -9,7 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED 14)
 set(CMAKE_CXX_STANDARD 14)
 
 # Use glob to get the list of all source files.
-file(GLOB_RECURSE SOURCES "${CMAKE_SOURCE_DIR}/src/**.cpp" "${CMAKE_SOURCE_DIR}/ext/*/*.cpp" "${CMAKE_SOURCE_DIR}/ext/glad/src/*.c" "${CMAKE_SOURCE_DIR}/ext/imgui/src/*.c")
+file(GLOB_RECURSE SOURCES "${CMAKE_SOURCE_DIR}/src/**.cpp" "${CMAKE_SOURCE_DIR}/ext/*/*.cpp" "${CMAKE_SOURCE_DIR}/ext/glad/src/*.c" "${CMAKE_SOURCE_DIR}/ext/imgui/src/*.c" "${CMAKE_SOURCE_DIR}/ext/gethostbyname/*.cpp")
 
 # We don't really need to include header and resource files to build, but it's
 # nice to have them show up in IDEs.

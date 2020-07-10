@@ -135,8 +135,8 @@ public:
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_REPEAT) {
         	glfwSetWindowShouldClose(window, GL_TRUE);
     	}
-		if (activeScene != nullptr && activeScene->handleKey != nullptr) {
-			activeScene->handleKey(window, key, scancode, action, mods, activeScene);
+		if (ActiveScene() != nullptr && ActiveScene()->handleKey != nullptr) {
+			ActiveScene()->handleKey(window, key, scancode, action, mods, ActiveScene());
 		}
 	}
 
@@ -147,16 +147,16 @@ public:
 	
 	void mouseCallback(GLFWwindow *window, int button, int action, int mods)
 	{
-		if (activeScene != nullptr && activeScene->handleClick != nullptr) {
-			activeScene->handleClick(window, button, action, mods, activeScene);
+		if (ActiveScene() != nullptr && ActiveScene()->handleClick != nullptr) {
+			ActiveScene()->handleClick(window, button, action, mods, ActiveScene());
 		}
 	}
 
 
 	void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos)
 	{
-		if (activeScene != nullptr && activeScene->onCursorUpdate != nullptr) {
-			activeScene->onCursorUpdate(window, xpos, ypos, activeScene);
+		if (ActiveScene() != nullptr && ActiveScene()->onCursorUpdate != nullptr) {
+			ActiveScene()->onCursorUpdate(window, xpos, ypos, ActiveScene());
 		}
 	}
 
@@ -190,8 +190,8 @@ public:
 
 	void initScene() {
 		scenes["main"] = *new BScene(vec2(map_size/2, map_size/2));
-		activeScene = &scenes["main"];
-		InitGameScene(activeScene, 0);
+		InitGameScene(&scenes["main"], 0);
+		SetActiveScene("main");
 	}
 	
 	void init(const std::string& resourceDirectory)
@@ -454,7 +454,8 @@ public:
 	void render() {
 		// Get current frame buffer size.
         int width, height;
-		RenderDepthMap(activeScene->getEntitiesWithComponents({COMPONENT_LOCATION, COMPONENT_MODEL, COMPONENT_RENDERABLE}), activeScene, map_size);
+		auto scene = ActiveScene();
+		RenderDepthMap(scene->getEntitiesWithComponents({COMPONENT_LOCATION, COMPONENT_MODEL, COMPONENT_RENDERABLE}), scene, map_size);
 		
 		glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
 		if (width == 0 || height == 0) {
@@ -473,8 +474,8 @@ public:
             Projection->perspective(45.0f, aspect, 0.01f, 10000.0f);
         View->pushMatrix();
             View->loadIdentity();
-            View->lookAt(activeScene->camera->eye, activeScene->camera->lookAt, activeScene->camera->up);
-		if (activeScene->skybox != nullptr) {
+            View->lookAt(scene->camera->eye, scene->camera->lookAt, scene->camera->up);
+		if (scene->skybox != nullptr) {
 			skyboxProg->bind();
 				auto ident = make_shared<MatrixStack>();
 					ident->loadIdentity();
@@ -486,9 +487,9 @@ public:
 				//(your code likely will be different depending 
 				glUniformMatrix4fv(skyboxProg->getUniform("V"), 1,GL_FALSE,value_ptr(View->topMatrix()) ); //set and send model transforms - likely want a bigger cube
 				glUniformMatrix4fv(skyboxProg->getUniform("M"), 1,GL_FALSE,value_ptr(ident->topMatrix())); //bind the cube map texture 
-				glActiveTexture(GL_TEXTURE0 + activeScene->skybox->unit);
-				glBindTexture(GL_TEXTURE_CUBE_MAP, activeScene->skybox->textureID); //draw the actual cube 
-				glUniform1i(skyboxProg->getUniform("skybox"),activeScene->skybox->unit);
+				glActiveTexture(GL_TEXTURE0 + scene->skybox->unit);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, scene->skybox->textureID); //draw the actual cube 
+				glUniform1i(skyboxProg->getUniform("skybox"),scene->skybox->unit);
 				vec4 skyColor = vec4(1.0, 1.0f, 1.0f, 1);
 				glUniform4f(skyboxProg->getUniform("lightColor"), skyColor.r, skyColor.g, skyColor.b, 1);
 				for (auto s : *(meshes["cube.obj"])) {
@@ -498,11 +499,11 @@ public:
 				glDepthFunc(GL_LESS);
 			skyboxProg->unbind();
 		}
-		renderParticles(activeScene, width, height);
-		RenderScene(prog, activeScene, width, height);
+		renderParticles(scene, width, height);
+		RenderScene(prog, scene, width, height);
 		glViewport(0, 0, width, height);
-		if (activeScene->updateGUI != nullptr) {
-			activeScene->updateGUI(activeScene, width, height);	
+		if (scene->updateGUI != nullptr) {
+			scene->updateGUI(scene, width, height);	
 		}
 		//set viewport for minimap	
 	}
@@ -553,14 +554,15 @@ int main(int argc, char *argv[])
 	// Loop until the user closes the window.
 	while (! glfwWindowShouldClose(windowManager->getHandle()))
 	{
+		auto scene = ActiveScene();
 		// Update scene.
-		if (activeScene != nullptr && activeScene->update != nullptr) {
-			activeScene->update(activeScene, windowManager);
+		if (scene != nullptr && scene->update != nullptr) {
+			scene->update(scene, windowManager);
 		}
 		// Update location for 3d sound
-		if (activeScene != nullptr && activeScene->camera != nullptr) {
-			irrklang::vec3df position(activeScene->camera->eye.x, activeScene->camera->eye.y, activeScene->camera->eye.z);        // position of the listener
-			irrklang::vec3df lookDirection(activeScene->camera->lookAt.x, activeScene->camera->lookAt.y, activeScene->camera->lookAt.z); // the direction the listener looks into
+		if (scene != nullptr && scene->camera != nullptr) {
+			irrklang::vec3df position(scene->camera->eye.x, scene->camera->eye.y, scene->camera->eye.z);        // position of the listener
+			irrklang::vec3df lookDirection(scene->camera->lookAt.x, scene->camera->lookAt.y, scene->camera->lookAt.z); // the direction the listener looks into
 			irrklang::vec3df velPerSecond(0,0,0);    // only relevant for doppler effects
 			irrklang::vec3df upVector(0,1,0);        // where 'up' is in your 3D scene
 			soundEngine->setListenerPosition(position, lookDirection, velPerSecond, upVector);

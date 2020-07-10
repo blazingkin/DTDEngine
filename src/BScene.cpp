@@ -17,6 +17,14 @@ std::map<std::string, std::shared_ptr<std::vector<Shape>>> meshes;
 BScene *activeScene;
 std::map<std::string, BScene> scenes;
 
+BScene *ActiveScene() {
+    return activeScene;
+}
+
+void SetActiveScene(std::string to) {
+    activeScene = &scenes[to];
+}
+
 BScene::BScene() {
     m_singleton = BLZEntity::newSimpleEntity();
     m_singleton->addComponent<c_singleton_t>(this, c_singleton_t{});

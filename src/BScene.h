@@ -79,9 +79,11 @@ class BScene {
     
 };
 
+BScene *ActiveScene();
+void SetActiveScene(std::string to);
+
 extern std::map<std::string, std::shared_ptr<std::vector<Shape>>> meshes;
 extern std::map<std::string, std::shared_ptr<Texture>> textures;
-extern BScene *activeScene;
 extern std::map<std::string, BScene> scenes;
 //extern std::map<std::string, std::vector<unsigned char>> maps;
 

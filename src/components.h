@@ -27,12 +27,7 @@ typedef struct _collider_obj : component_t {
 } c_collider_t;
 #define COMPONENT_COLLIDER (std::type_index(typeid(c_collider_t)))
 
-#include "RenderableWithPosition.h"
-#include "Texture.h"
-#include "Material.h"
-#include "Shape.h"
-#include "Program.h"
-#include "BScene.h"
+#include "components/render_components.h"
 
 typedef struct _physics_obj : component_t {
     glm::vec3 velocity = glm::vec3(0,0,0);
@@ -40,49 +35,12 @@ typedef struct _physics_obj : component_t {
 } c_physics_t;
 #define COMPONENT_PHYSICS (std::type_index(typeid(c_physics_t)))
 
-typedef std::shared_ptr<std::vector<Shape>> model_t;
-
-typedef struct _model_obj : component_t {
-    glm::vec3 lowerBound = glm::vec3(0, 0, 0);
-    glm::vec3 upperBound = glm::vec3(0, 0, 0);
-    model_t model = nullptr;
-    float radius = 1;
-} c_model_t;
-#define COMPONENT_MODEL (std::type_index(typeid(c_model_t)))
-
-typedef struct _renderable_obj : component_t {
-    std::shared_ptr<Material> material = std::make_shared<Material>();
-    std::shared_ptr<Texture> tex = nullptr;
-    std::shared_ptr<Texture> normalMap = nullptr;
-    std::shared_ptr<Program> program = nullptr;
-    std::map<std::string, glm::vec4> shaderUniforms;
-    bool drawShadow = false;
-    std::shared_ptr<Texture> bump = nullptr;
-    std::vector<std::shared_ptr<RenderableWithPosition>> children = {};
-} c_render_t;
-#define COMPONENT_RENDERABLE (std::type_index(typeid(c_render_t)))
 
 
 typedef struct _singleton_obj : component_t {
 } c_singleton_t;
 #define COMPONENT_SINGLETON (std::type_index(typeid(c_singleton_t)))
 
-#include "network.h"
-// Singleton
-typedef struct _network_connections : component_t {
-    bool shouldTerminate = false;
-    std::vector<port_t> listening_port;
-} c_network_connections_t;
-#define COMPONENT_NETWORK_CONNECTIONS (std::type_index(typeid(c_network_connections_t)))
-
-
-
-//Singleton
-typedef struct _network_queue : component_t {
-    std::queue<network_packet_t> in;
-    std::queue<network_packet_t> out;
-} c_network_queue_t;
-#define COMPONENT_NETWORK_QUEUE (std::type_index(typeid(c_network_queue_t)))
-
+#include "components/network_components.h"
 
 #endif // Component header guard

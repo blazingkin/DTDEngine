@@ -5,6 +5,11 @@ using namespace glm;
 extern float map_size;
 shared_ptr<Program> active_program = nullptr;
 vec3 currentCameraPosition;
+GLuint mainFBO;
+GLuint mainFBOTex;
+// Our shader program
+std::shared_ptr<Program> prog, noShadowProg;
+std::shared_ptr<Program> skyboxProg;
 
 vector<vec4> planes;
 void makeViewFrust(glm::mat4 P, glm::mat4 V){
@@ -269,9 +274,83 @@ void renderEntities(shared_ptr<Program> program,shared_ptr<MatrixStack> Projecti
     }
 }
 
+void initSystemRender() {
 
 
-void RenderScene(shared_ptr<Program> program, BScene *scene, int width, int height) {
+		glGenFramebuffers(1, &mainFBO);
+
+		//generate the texture
+		glGenTextures(1, &mainFBOTex);
+		glBindTexture(GL_TEXTURE_2D, mainFBOTex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		//bind with framebuffer's depth buffer
+		glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mainFBOTex, 0);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		const vector<string> shaders({"tex_vert.glsl", "blinn_phong.glsl"});
+		// Initialize the GLSL program.
+		prog = make_shared<Program>();
+		prog->setVerbose(true);
+		prog->init(shaders);
+		prog->addUniform("P");
+		prog->addUniform("V");
+		prog->addUniform("M");
+		prog->addUniform("LS");
+		prog->addUniform("MatAmb");
+		prog->addUniform("MatDif");
+		prog->addUniform("MatSpec");
+		prog->addUniform("shine");
+		prog->addUniform("viewVector");
+		prog->addUniform("lightPos");
+		prog->addUniform("lightColor");
+		prog->addUniform("Texture0");
+		prog->addUniform("shadowDepth");
+		prog->addUniform("textureEnabled");
+		prog->addUniform("normalMap");
+		prog->addAttribute("vertPos");
+		prog->addAttribute("vertNor");
+		prog->addAttribute("vertTex");
+
+		const vector<string> NoShadShaders({"tex_vert.glsl", "blinn_phong_no_shadows.glsl"});
+		// Initialize the GLSL program.
+		noShadowProg = make_shared<Program>();
+		noShadowProg->setVerbose(true);
+		noShadowProg->init(NoShadShaders);
+		noShadowProg->addUniform("P");
+		noShadowProg->addUniform("V");
+		noShadowProg->addUniform("M");
+		noShadowProg->addUniform("viewVector");
+		noShadowProg->addUniform("lightPos");
+		noShadowProg->addUniform("lightColor");
+		noShadowProg->addUniform("Texture0");
+		noShadowProg->addUniform("normalMap");
+		noShadowProg->addAttribute("vertPos");
+		noShadowProg->addAttribute("vertNor");
+		noShadowProg->addAttribute("vertTex");
+
+		const vector<string> skyboxShaders({"sky_vert.glsl", "sky_frag.glsl"});
+		skyboxProg = make_shared<Program>();
+		skyboxProg->setVerbose(true);
+		skyboxProg->init(skyboxShaders);
+		skyboxProg->addUniform("P");
+		skyboxProg->addUniform("V");
+		skyboxProg->addUniform("M");
+		skyboxProg->addUniform("skybox");
+		skyboxProg->addUniform("lightColor");
+		skyboxProg->addAttribute("vertPos");
+		skyboxProg->addAttribute("vertTex");
+}
+
+
+GLuint RenderScene(BScene *scene, int width, int height) {
 
     //Use the matrix stack for Lab 6
     float aspect = width/(float)height;
@@ -279,7 +358,38 @@ void RenderScene(shared_ptr<Program> program, BScene *scene, int width, int heig
     auto Projection = make_shared<MatrixStack>();
     auto View = make_shared<MatrixStack>();
     auto Model = make_shared<MatrixStack>();
-
+    glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
+    glViewport(0, 0, 1024, 1024);
+    // Clear framebuffer.
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    Projection->perspective(45.0f, aspect, 0.01f, 10000.0f);
+    View->loadIdentity();
+    View->lookAt(scene->camera->eye, scene->camera->lookAt, scene->camera->up);
+    if (scene->skybox != nullptr) {
+			skyboxProg->bind();
+				auto ident = make_shared<MatrixStack>();
+					ident->loadIdentity();
+					ident->scale(1000);
+				//set the projection matrix - can use the same one
+				glUniformMatrix4fv(skyboxProg->getUniform("P"), 1, GL_FALSE,value_ptr(Projection->topMatrix()));
+				//set the depth function to always draw the box!
+				glDepthFunc(GL_LEQUAL); //set up view matrix to include your view transforms  
+				//(your code likely will be different depending 
+				glUniformMatrix4fv(skyboxProg->getUniform("V"), 1,GL_FALSE,value_ptr(View->topMatrix()) ); //set and send model transforms - likely want a bigger cube
+				glUniformMatrix4fv(skyboxProg->getUniform("M"), 1,GL_FALSE,value_ptr(ident->topMatrix())); //bind the cube map texture 
+				glActiveTexture(GL_TEXTURE0 + scene->skybox->unit);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, scene->skybox->textureID); //draw the actual cube 
+				glUniform1i(skyboxProg->getUniform("skybox"),scene->skybox->unit);
+				vec4 skyColor = vec4(1.0, 1.0f, 1.0f, 1);
+				glUniform4f(skyboxProg->getUniform("lightColor"), skyColor.r, skyColor.g, skyColor.b, 1);
+				for (auto s : *(meshes["cube.obj"])) {
+					s.draw(skyboxProg);
+				}
+				//set the depth test back to normal! 
+				glDepthFunc(GL_LESS);
+			skyboxProg->unbind();
+		}
+    renderParticles(scene, width, height);
     Projection->pushMatrix();
         Projection->perspective(45.0f, aspect, 0.01f, 750.0f);
     View->pushMatrix();
@@ -292,15 +402,12 @@ void RenderScene(shared_ptr<Program> program, BScene *scene, int width, int heig
 
     Model->pushMatrix();
         Model->loadIdentity();
-        renderEntities(program, Projection, View, Model, scene, scene->getEntitiesWithComponents({COMPONENT_LOCATION, COMPONENT_MODEL, COMPONENT_RENDERABLE}), true);
+        renderEntities(prog, Projection, View, Model, scene, scene->getEntitiesWithComponents({COMPONENT_LOCATION, COMPONENT_MODEL, COMPONENT_RENDERABLE}), true);
     Model->popMatrix();
-
-    // Pop matrix stacks.
     Projection->popMatrix();
     View->popMatrix();
 
-
-
+    return mainFBOTex;
 }
 
 

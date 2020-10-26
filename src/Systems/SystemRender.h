@@ -22,15 +22,17 @@
 #include <math.h>
 #include <thread>
 #include "../_instance_data.h"
+#include "../Particles.h"
 
 void setModel(std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack>M);
 void printVec3(glm::vec3 v);
-void RenderScene(std::shared_ptr<Program> program, BScene *scene, int width, int height);
+GLuint RenderScene(BScene *scene, int width, int height);
 void makeViewFrust(glm::mat4 P, glm::mat4 V);
 float DistToPlane(float A, float B, float C, float D, glm::vec3 point);
 bool ViewFrustCull(glm::vec3 center, float radius);
 void setupInstanceRenderData(std::vector<std::shared_ptr<BLZEntity>> *entities, instance_render_data_t *result);
 void RenderInstances(instance_render_data_t *data, std::shared_ptr<Program> program, std::shared_ptr<BLZEntity> entity, std::shared_ptr<MatrixStack> Projection, std::shared_ptr<MatrixStack> View, BScene *scene);
 float calculateRadius(c_model_t *model_comp, c_location_t *location_comp);
+void initSystemRender();
 
 #endif

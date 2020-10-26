@@ -2,6 +2,7 @@
 #ifndef MATERIAL_H_GUARD
 #define MATERIAL_H_GUARD 1
 #include <glm/gtc/type_ptr.hpp>
+#include "Utils/ColorConversion.h"
 #include <memory>
 #include <map>
 
@@ -14,7 +15,7 @@ class Material {
         glm::vec3 Specular;
 
 };
-
+void initMaterials(const std::string& resourceDirectory);
 extern std::map<std::string, std::shared_ptr<Material>> materials;
 
 #endif

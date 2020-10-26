@@ -10,7 +10,7 @@
 
 using namespace std;
 
-int texUnit = 2;
+int texUnit = 3;
 std::map<std::string, std::shared_ptr<Texture>> uiTextures;
 
 Texture::Texture() :

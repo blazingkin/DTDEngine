@@ -36,6 +36,7 @@
 #include "Systems/SystemRender.h"
 #include "Systems/SystemPhysics.h"
 #include "Systems/SystemShadows.h"
+#include "Systems/SystemApplyPostProcessing.h"
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 
@@ -56,6 +57,7 @@ Document config;
 
 using namespace std;
 using namespace glm;
+
 
 void loadConfig(const string resourceDirectory) {
 	cout << "Loading Configs" << endl;
@@ -79,10 +81,6 @@ void loadConfig(const string resourceDirectory) {
 }
 
 
-
-
-
-
 #ifdef _DEBUG_OPENGL
 		void GLAPIENTRY
 	MessageCallback( GLenum source,
@@ -104,23 +102,6 @@ class Application : public EventCallbacks
 
 public:
 
-
-
-	// Our shader program
-	std::shared_ptr<Program> prog, noShadowProg;
-	std::shared_ptr<Program> skyboxProg;
-
-
-	std::shared_ptr<Program> loadingScreenProg;
- 
-	// Shape to be used (from  file) - modify to support multiple
-	shared_ptr<Shape> houseMesh;
-	shared_ptr<Shape> boxMesh;
-	shared_ptr<Shape> sphereMesh;
-	Shape mutatingMesh;
-
-
-
 	// Contains vertex information for OpenGL
 	GLuint VertexArrayID;
 
@@ -132,6 +113,10 @@ public:
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
+		/*auto io = ImGui::GetIO();
+		if (io.WantCaptureKeyboard) {
+			return;
+		}*/
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_REPEAT) {
         	glfwSetWindowShouldClose(window, GL_TRUE);
     	}
@@ -147,6 +132,10 @@ public:
 	
 	void mouseCallback(GLFWwindow *window, int button, int action, int mods)
 	{
+		/*auto io = ImGui::GetIO();
+		if (io.WantCaptureMouse) {
+			return;
+		}*/
 		if (ActiveScene() != nullptr && ActiveScene()->handleClick != nullptr) {
 			ActiveScene()->handleClick(window, button, action, mods, ActiveScene());
 		}
@@ -229,58 +218,7 @@ public:
 			}
 		}
 
-		const vector<string> shaders({"tex_vert.glsl", "blinn_phong.glsl"});
-		// Initialize the GLSL program.
-		prog = make_shared<Program>();
-		prog->setVerbose(true);
-		prog->init(shaders);
-		prog->addUniform("P");
-		prog->addUniform("V");
-		prog->addUniform("M");
-		prog->addUniform("LS");
-		prog->addUniform("MatAmb");
-		prog->addUniform("MatDif");
-		prog->addUniform("MatSpec");
-		prog->addUniform("shine");
-		prog->addUniform("viewVector");
-		prog->addUniform("lightPos");
-		prog->addUniform("lightColor");
-		prog->addUniform("Texture0");
-		prog->addUniform("shadowDepth");
-		prog->addUniform("textureEnabled");
-		prog->addUniform("normalMap");
-		prog->addAttribute("vertPos");
-		prog->addAttribute("vertNor");
-		prog->addAttribute("vertTex");
 
-		const vector<string> NoShadShaders({"tex_vert.glsl", "blinn_phong_no_shadows.glsl"});
-		// Initialize the GLSL program.
-		noShadowProg = make_shared<Program>();
-		noShadowProg->setVerbose(true);
-		noShadowProg->init(NoShadShaders);
-		noShadowProg->addUniform("P");
-		noShadowProg->addUniform("V");
-		noShadowProg->addUniform("M");
-		noShadowProg->addUniform("viewVector");
-		noShadowProg->addUniform("lightPos");
-		noShadowProg->addUniform("lightColor");
-		noShadowProg->addUniform("Texture0");
-		noShadowProg->addUniform("normalMap");
-		noShadowProg->addAttribute("vertPos");
-		noShadowProg->addAttribute("vertNor");
-		noShadowProg->addAttribute("vertTex");
-
-		const vector<string> skyboxShaders({"sky_vert.glsl", "sky_frag.glsl"});
-		skyboxProg = make_shared<Program>();
-		skyboxProg->setVerbose(true);
-		skyboxProg->init(skyboxShaders);
-		skyboxProg->addUniform("P");
-		skyboxProg->addUniform("V");
-		skyboxProg->addUniform("M");
-		skyboxProg->addUniform("skybox");
-		skyboxProg->addUniform("lightColor");
-		skyboxProg->addAttribute("vertPos");
-		skyboxProg->addAttribute("vertTex");
 	}
 
 	void initTextures(std::string resourceDirectory) {
@@ -313,195 +251,25 @@ public:
 		}
 	}
 
-
-
-	void initMaterials(const std::string& resourceDirectory) {
-		Material shinyBluePlastic;
-			shinyBluePlastic.Ambient = vec3(0.02, 0.04, 0.2);
-			shinyBluePlastic.Diffuse = vec3(0, 0.15, 0.9);
-			shinyBluePlastic.Specular = vec3(0.14, 0.2, 0.6);
-			shinyBluePlastic.shine = 120;
-		Material shinyWhitePlastic;
-			shinyWhitePlastic.Ambient = vec3(0, 0, 0);
-			shinyWhitePlastic.Diffuse = vec3(0.65, 0.65, 0.65);
-			shinyWhitePlastic.Specular = vec3(0.20, 0.20, 0.20);
-			shinyWhitePlastic.shine = 0.25;
-		Material flatGrey;
-			flatGrey.Ambient = vec3(0.13, 0.13, 0.14);
-			flatGrey.Diffuse = vec3(0.3, 0.3, 0.4);
-			flatGrey.Specular = vec3(0.05, 0.05, 0.05);
-			flatGrey.shine = 0.2;
-		Material darkGrey;
-			flatGrey.Ambient = vec3(0.05, 0.05, 0.05);
-			flatGrey.Diffuse = vec3(0.05, 0.05, 0.1);
-			flatGrey.Specular = vec3(0.025, 0.025, 0.025);
-			flatGrey.shine = 0.2;
-		Material shinyGrey;
-			flatGrey.Ambient = vec3(0.13, 0.13, 0.14);
-			flatGrey.Diffuse = vec3(0.3, 0.3, 0.4);
-			flatGrey.Specular = vec3(0.1, 0.1, 0.1);
-			flatGrey.shine = 0.3;
-		Material brass;
-			brass.Ambient = vec3(0.3294, 0.2235, 0.02745);
-			brass.Diffuse = vec3(0.7804, 0.5686, 0.11373);
-			brass.Specular = vec3(0.9922, 0.941176, 0.80784);
-			brass.shine = 27.9;
-		Material grass;
-			grass.Ambient = vec3(0.0, 0.2235, 0.0);
-			grass.Diffuse = vec3(0.1004, 0.686, 0.31373);
-			grass.Specular = vec3(0.09922, 0.0941176, 0.080784);
-			grass.shine = 1;
-		Material tree;
-			tree.Ambient = vec3(0.0, 0.2235, 0.0);
-			tree.Diffuse = vec3(0.1004, 0.686, 0.31373);
-			tree.Specular = vec3(0.03, 0.300, 0.080784);
-			tree.shine = 1;
-		Material fur;
-			fur.Ambient = vec3(50.0/255.0, 30.0/255.0, 15.0/255.0);
-			fur.Diffuse = vec3(51.0/255.0, 37.0/255.0, 18.0/255.0);
-			fur.Specular = vec3(10.0/255.0, 6.0/255.0, 3.0/255.0);
-			fur.shine = 0;
-		Material shadow;
-			shadow.Ambient = vec3(0);
-			shadow.Diffuse = vec3(0);
-			shadow.Specular = vec3(0);
-			shadow.shine = 0;
-		Material straw;
-			straw.Ambient = vec3(228.0/500.0, 217.0 / 500.0, 111.0 / 500.0);
-			straw.Diffuse = vec3(228.0/500.0, 217.0 / 500.0, 111.0 / 500.0);
-			straw.Specular = vec3(0.0, 0.0, 0.0);
-			straw.shine = 1;
-		Material clothing;
-			clothing.Ambient = vec3(0.35, 0.35, 0.35);
-			clothing.Diffuse = vec3(0.6, 0.6, 0.6);
-			clothing.Specular = vec3(0.05, 0.05, 0.05);
-			clothing.shine = 1;
-		Material tanSkin;
-			tanSkin.Ambient = vec3(0.35, 0.35, 0.35);
-			tanSkin.Diffuse = vec3(0.5, 0.5, 0.5);
-			tanSkin.Specular = vec3(0.15, 0.15, 0.15);
-			tanSkin.shine = 1;
-		Material virus;
-			virus.Ambient = RGBToVec3(45, 15, 45);
-			virus.Diffuse = RGBToVec3(0x7C238C) - virus.Ambient;
-			virus.Specular = vec3(0.13, 0.0, 0.05);
-			virus.shine = 8;
-		Material houseSiding;
-			houseSiding.Ambient = RGBToVec3(60, 60, 40);
-			houseSiding.Diffuse = RGBToVec3(180, 176, 126);
-			houseSiding.Specular = RGBToVec3(10,10,10);
-			houseSiding.shine = 0.6;
-		Material houseRoof;
-			houseRoof.Ambient = RGBToVec3(5, 40, 70);
-			houseRoof.Diffuse = RGBToVec3(12, 141, 122);
-			houseRoof.Specular = RGBToVec3(5,5,5);
-			houseRoof.shine = 0.4;
-		Material towerMaterial;
-			towerMaterial.Ambient = RGBToVec3(60, 80, 60);
-			towerMaterial.Diffuse = RGBToVec3(108, 150, 108);
-			towerMaterial.Specular = RGBToVec3(20,20,20);
-			towerMaterial.shine = 8;
-		Material redMat;
-			redMat.Ambient = vec3(0.2, 0.04, 0.02);
-			redMat.Diffuse = vec3(0.9, 0.15, 0);
-			redMat.Specular = vec3(0.6, 0.2, 0.12);
-			redMat.shine = 23;
-		Material floor;
-			floor.Ambient = vec3(0.0, 0.2235, 0.0);
-			floor.Diffuse = vec3(0.1004, 0.686, 0.31373);
-			floor.Specular = vec3(0.009922, 0.00941176, 0.0080784);
-			floor.shine = 0.01;
-		Material whiteAmbient;
-			whiteAmbient.Ambient = vec3(1.0, 1.0, 1.0);
-			whiteAmbient.Diffuse = vec3(0.0, 0.0, 0.0);
-			whiteAmbient.Specular = vec3(0.0, 0.0, 0.0);
-			whiteAmbient.shine = 0.01;
-		materials["shiny_blue_plastic"]  = make_shared<Material>(shinyBluePlastic);
-		materials["shiny_white_plastic"]  = make_shared<Material>(shinyWhitePlastic);
-		materials["flat_grey"] = make_shared<Material>(flatGrey);
-		materials["flat_gray"] = make_shared<Material>(flatGrey);
-		materials["dark_gray"] = make_shared<Material>(darkGrey);
-		materials["dark_grey"] = make_shared<Material>(darkGrey);
-		materials["shiny_gray"] = make_shared<Material>(shinyGrey);
-		materials["shiny_gray"] = make_shared<Material>(shinyGrey);
-		materials["brass"] = make_shared<Material>(brass);
-		materials["grass"] = make_shared<Material>(grass);
-		materials["tree"] = make_shared<Material>(tree);
-		materials["fur"] = make_shared<Material>(fur);
-		materials["shadow"] = make_shared<Material>(shadow);
-		materials["straw"] = make_shared<Material>(straw);
-		materials["clothing"] = make_shared<Material>(clothing);
-		materials["tan_skin"] = make_shared<Material>(tanSkin);
-		materials["virus"] = make_shared<Material>(virus);
-		materials["house_siding"] = make_shared<Material>(houseSiding);
-		materials["house_roof"] = make_shared<Material>(houseRoof);
-		materials["tower"] = make_shared<Material>(towerMaterial);
-		materials["redMat"] = make_shared<Material>(redMat);
-		materials["floor"] = make_shared<Material>(floor);
-		materials["white_ambient"] = make_shared<Material>(whiteAmbient);
-	}
-
-
 	void initGeom(const std::string& resourceDirectory)
 	{
 		importModelsFrom((resourceDirectory + "/models"), "");
 	}
 
 
-
-	
-
 	void render() {
 		// Get current frame buffer size.
-        int width, height;
+		int width, height;
 		auto scene = ActiveScene();
 		RenderDepthMap(scene->getEntitiesWithComponents({COMPONENT_LOCATION, COMPONENT_MODEL, COMPONENT_RENDERABLE}), scene, map_size);
-		
 		glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
 		if (width == 0 || height == 0) {
 			return;
 		}
-		glViewport(0, 0, width, height);
-		// Clear framebuffer.
+		auto tex = RenderScene(scene, width, height);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		float aspect = width/(float)height;
-		// Create the matrix stacks - please leave these alone for now
-		auto Projection = make_shared<MatrixStack>();
-		auto View = make_shared<MatrixStack>();
-		auto Model = make_shared<MatrixStack>();
-        Projection->pushMatrix();
-            Projection->perspective(45.0f, aspect, 0.01f, 10000.0f);
-        View->pushMatrix();
-            View->loadIdentity();
-            View->lookAt(scene->camera->eye, scene->camera->lookAt, scene->camera->up);
-		if (scene->skybox != nullptr) {
-			skyboxProg->bind();
-				auto ident = make_shared<MatrixStack>();
-					ident->loadIdentity();
-					ident->scale(1000);
-				//set the projection matrix - can use the same one
-				glUniformMatrix4fv(skyboxProg->getUniform("P"), 1, GL_FALSE,value_ptr(Projection->topMatrix()));
-				//set the depth function to always draw the box!
-				glDepthFunc(GL_LEQUAL); //set up view matrix to include your view transforms  
-				//(your code likely will be different depending 
-				glUniformMatrix4fv(skyboxProg->getUniform("V"), 1,GL_FALSE,value_ptr(View->topMatrix()) ); //set and send model transforms - likely want a bigger cube
-				glUniformMatrix4fv(skyboxProg->getUniform("M"), 1,GL_FALSE,value_ptr(ident->topMatrix())); //bind the cube map texture 
-				glActiveTexture(GL_TEXTURE0 + scene->skybox->unit);
-				glBindTexture(GL_TEXTURE_CUBE_MAP, scene->skybox->textureID); //draw the actual cube 
-				glUniform1i(skyboxProg->getUniform("skybox"),scene->skybox->unit);
-				vec4 skyColor = vec4(1.0, 1.0f, 1.0f, 1);
-				glUniform4f(skyboxProg->getUniform("lightColor"), skyColor.r, skyColor.g, skyColor.b, 1);
-				for (auto s : *(meshes["cube.obj"])) {
-					s.draw(skyboxProg);
-				}
-				//set the depth test back to normal! 
-				glDepthFunc(GL_LESS);
-			skyboxProg->unbind();
-		}
-		renderParticles(scene, width, height);
-		RenderScene(prog, scene, width, height);
-		glViewport(0, 0, width, height);
+		applyPostprocessing(scene, tex);
 		if (scene->updateGUI != nullptr) {
 			scene->updateGUI(scene, width, height);	
 		}
@@ -544,12 +312,16 @@ int main(int argc, char *argv[])
 	application->initUI(resourceDir);
 	application->init(resourceDir);
 	application->initTextures(resourceDir);
-	application->initMaterials(resourceDir);
+	initMaterials(resourceDir);
 	application->initGeom(resourceDir);
 	initAudio(resourceDir);
 	application->initScene();
 	initShadow(); // OpenGL calls must be on main thread
 	setupParticleSystem(); // OpenGL calls must be on main thread
+	initSystemRender();
+	initializePostprocessing(); // OpenGL calls must be on the main thread
+
+
 
 	// Loop until the user closes the window.
 	while (! glfwWindowShouldClose(windowManager->getHandle()))

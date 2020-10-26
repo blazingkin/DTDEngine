@@ -51,8 +51,6 @@
 //#include <iostream>
 //#include "stb_gen.h"
 
-#define USE_LOADED_MAPS = true;
-
 Document config;
 
 using namespace std;
@@ -155,6 +153,7 @@ public:
 		if (width <= 0 || height <= 0) {
 			return;
 		}
+		postprocessingOnResize(width, height);
 		glViewport(0, 0, width, height);
 	}
 

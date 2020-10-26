@@ -6,6 +6,7 @@
 
 void initializePostprocessing();
 void applyPostprocessing(BScene *scene, GLuint tex);
+void postprocessingOnResize(int width, int height);
 void cleanupPostprocessing();
 
 #endif

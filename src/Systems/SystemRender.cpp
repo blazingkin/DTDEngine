@@ -274,6 +274,8 @@ void renderEntities(shared_ptr<Program> program,shared_ptr<MatrixStack> Projecti
     }
 }
 
+
+
 void initSystemRender() {
 
 
@@ -349,7 +351,6 @@ void initSystemRender() {
 		skyboxProg->addAttribute("vertTex");
 }
 
-
 GLuint RenderScene(BScene *scene, int width, int height) {
 
     //Use the matrix stack for Lab 6
@@ -358,8 +359,19 @@ GLuint RenderScene(BScene *scene, int width, int height) {
     auto Projection = make_shared<MatrixStack>();
     auto View = make_shared<MatrixStack>();
     auto Model = make_shared<MatrixStack>();
+    static int lastWidth, lastHeight = 0;
+
+    if (width != lastWidth || height != lastHeight) {
+        // We must resize the texture that we are drawing to if the window size has changed
+        glBindTexture(GL_TEXTURE_2D, mainFBOTex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+        lastWidth = width;
+        lastHeight = height;
+    }
+    
     glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
-    glViewport(0, 0, 1024, 1024);
+    glViewport(0, 0, width, height);
     // Clear framebuffer.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     Projection->perspective(45.0f, aspect, 0.01f, 10000.0f);

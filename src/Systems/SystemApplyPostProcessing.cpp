@@ -16,8 +16,8 @@ void initializePostprocessing() {
     //generate the texture
     glGenTextures(1, &fbotex);
     glBindTexture(GL_TEXTURE_2D, fbotex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, 1920, 1080, 
-        0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 
+        0,  GL_RGB, GL_FLOAT, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -37,6 +37,7 @@ void initializePostprocessing() {
     ppprog->init(depthShaders);
     ppprog->addAttribute("vertPos");
     ppprog->addUniform("Texture0");
+    ppprog->addUniform("P");
 
     // Create the square on which to render
     static const GLfloat g_quad_vertex_buffer_data[] =
@@ -65,14 +66,20 @@ void initializePostprocessing() {
 	CHECKED_GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 }
 
+void postprocessingOnResize(int width, int height) {
+    glBindTexture(GL_TEXTURE_2D, fbotex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 
+        0,  GL_RGB, GL_FLOAT, NULL);
+}
+
 
 void applyPostprocessing(BScene *scene, GLuint tex) {
     ppprog->bind();
+    // Bind the output to Texture0
     CHECKED_GL_CALL(glActiveTexture(GL_TEXTURE0));
     CHECKED_GL_CALL(glBindTexture(GL_TEXTURE_2D, tex));
     CHECKED_GL_CALL(glUniform1i(ppprog->getUniform("Texture0"), 0));
     CHECKED_GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    
 
     CHECKED_GL_CALL(glBindVertexArray(squarevao));
     glEnableVertexAttribArray(0);

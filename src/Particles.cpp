@@ -123,7 +123,10 @@ void resetParticles() {
 void renderParticles(BScene *scene, int width, int height) {
     float aspect = width / (float) height;
     particleProg->bind();
-    glUniformMatrix4fv(particleProg->getUniform("P"), 1, GL_FALSE, value_ptr(glm::perspective(45.0f, aspect, 0.01f, 500.0f)));
+
+    float fovY = FOV_Y_FROM_X(scene->singleton()->getComponent<c_video_settings_t>()->fovX, aspect);
+
+    glUniformMatrix4fv(particleProg->getUniform("P"), 1, GL_FALSE, value_ptr(glm::perspective(fovY, aspect, 0.01f, 500.0f)));
     glUniformMatrix4fv(particleProg->getUniform("V"), 1, GL_FALSE, value_ptr(glm::lookAt(scene->camera->eye, scene->camera->lookAt, scene->camera->up)));
     glUniform1f(particleProg->getUniform("uTime"), (float) glfwGetTime());
     particleProg->setTexture(textures["particleAtlas.png"]);

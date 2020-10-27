@@ -43,4 +43,6 @@ typedef struct _singleton_obj : component_t {
 
 #include "components/network_components.h"
 
+#include "components/video_settings_component.h"
+
 #endif // Component header guard

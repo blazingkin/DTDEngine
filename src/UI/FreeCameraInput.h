@@ -1,5 +1,6 @@
 #ifndef FREE_CAMERA_INPUT_H
 #define FREE_CAMERA_INPUT_H 1
+#include "../BLZEntity.h"
 #include "../BScene.h"
 
 void freeCameraHandleKey(GLFWwindow *window, int key, int scancode, int action, int mods, BScene *scene);

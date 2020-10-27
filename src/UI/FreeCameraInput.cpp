@@ -8,7 +8,13 @@ void freeCameraHandleKey(GLFWwindow *window, int key, int scancode, int action, 
     if (key == GLFW_KEY_SPACE && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
         scene->camera->eye.y +=0.2;
         scene->camera->lookAt.y += 0.2;
-    } 
+    }
+    if (key == GLFW_KEY_P) {
+        scene->singleton()->getComponent<c_video_settings_t>()->fovX += 0.01f;
+    }
+    if (key == GLFW_KEY_O) {
+        scene->singleton()->getComponent<c_video_settings_t>()->fovX -= 0.01f;
+    }
   /*  if (key == GLFW_KEY_W && (action == GLFW_PRESS || action == GLFW_RELEASE)) {
         if (action == GLFW_PRESS){
             playerMotion.y = 1;

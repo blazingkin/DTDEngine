@@ -28,6 +28,7 @@ void SetActiveScene(std::string to) {
 BScene::BScene() {
     m_singleton = BLZEntity::newSimpleEntity();
     m_singleton->addComponent<c_singleton_t>(this, c_singleton_t{});
+    m_singleton->addComponent<c_video_settings_t>(this, c_video_settings_t{});
 }
 
 BScene::BScene(vec2 mS) {
@@ -44,6 +45,7 @@ BScene::BScene(vec2 mS) {
 
     m_singleton = BLZEntity::newSimpleEntity();
     m_singleton->addComponent<c_singleton_t>(this, c_singleton_t{});
+    m_singleton->addComponent<c_video_settings_t>(this, c_video_settings_t{});
 }
 
 std::shared_ptr<BLZEntity> BScene::singleton() {

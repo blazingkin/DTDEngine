@@ -23,6 +23,7 @@
 #include <thread>
 #include "../_instance_data.h"
 #include "../Particles.h"
+#include "../Utils/FieldOfViewHelpers.h"
 
 void setModel(std::shared_ptr<Program> prog, std::shared_ptr<MatrixStack>M);
 void printVec3(glm::vec3 v);

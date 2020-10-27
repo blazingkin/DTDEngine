@@ -359,6 +359,9 @@ GLuint RenderScene(BScene *scene, int width, int height) {
     auto Projection = make_shared<MatrixStack>();
     auto View = make_shared<MatrixStack>();
     auto Model = make_shared<MatrixStack>();
+
+    auto video_settings = scene->singleton()->getComponent<c_video_settings_t>();
+
     static int lastWidth, lastHeight = 0;
 
     if (width != lastWidth || height != lastHeight) {
@@ -369,12 +372,16 @@ GLuint RenderScene(BScene *scene, int width, int height) {
         lastWidth = width;
         lastHeight = height;
     }
-    
+
     glBindFramebuffer(GL_FRAMEBUFFER, mainFBO);
     glViewport(0, 0, width, height);
     // Clear framebuffer.
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    Projection->perspective(45.0f, aspect, 0.01f, 10000.0f);
+
+    
+    auto fovY = FOV_Y_FROM_X(video_settings->fovX, aspect);
+
+    Projection->perspective(fovY, aspect, 0.01f, 10000.0f);
     View->loadIdentity();
     View->lookAt(scene->camera->eye, scene->camera->lookAt, scene->camera->up);
     if (scene->skybox != nullptr) {
@@ -403,7 +410,7 @@ GLuint RenderScene(BScene *scene, int width, int height) {
 		}
     renderParticles(scene, width, height);
     Projection->pushMatrix();
-        Projection->perspective(45.0f, aspect, 0.01f, 750.0f);
+        Projection->perspective(fovY, aspect, 0.01f, 750.0f);
     View->pushMatrix();
         View->loadIdentity();
         View->lookAt(scene->camera->eye, scene->camera->lookAt, scene->camera->up);
